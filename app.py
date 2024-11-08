@@ -1,35 +1,53 @@
 import streamlit as st
-import pandas as pd
-from io import StringIO
+import requests
 
-# Title of the app
-st.title("File Upload Example")
+# The URL of the Django API for uploading files
+API_URL = "http://localhost:8000/api/save_docs/"  # Replace with your actual API endpoint
 
-# Instructions
-st.markdown("""
-    Please upload a file. We currently support CSV and TXT files.
-""")
+def upload_file_to_api(uploaded_file):
+    """Send the uploaded file to the Django API and return the file URL."""
+    # Prepare the file as a dictionary to send in a multipart/form-data POST request
+    files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+
+    # Send POST request to the Django API with the uploaded file
+    response = requests.post(API_URL, files=files)
+
+    if response.status_code == 201:
+        # Successfully uploaded, return the file URL from the response
+        return response.json().get("file", None)
+    else:
+        st.error(f"Failed to upload file. Error: {response.text}")
+        return None
+
+def display_uploaded_files(file_urls):
+    """Display a list of uploaded file URLs in Streamlit."""
+    if file_urls:
+        st.write("### Uploaded Files:")
+        for url in file_urls:
+            st.markdown(f"[Click here to access the file]({url})")
+    else:
+        st.write("No files uploaded yet.")
+
+# Streamlit app UI
+st.title("File Upload with Django and Streamlit")
 
 # File uploader widget
-uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt"])
+uploaded_file = st.file_uploader("Choose an audio file", type=["mp3", "wav", "flac", "ogg"])
 
-# Check if a file is uploaded
-if uploaded_file is not None:
-    # If the uploaded file is a CSV file
-    if uploaded_file.type == "text/csv":
-        # Read the CSV file into a pandas dataframe
-        df = pd.read_csv(uploaded_file)
-        st.write("Uploaded CSV file:")
-        st.dataframe(df)  # Display the dataframe
+if uploaded_file:
+    # Call the API to upload the file
+    file_url = upload_file_to_api(uploaded_file)
 
-    # If the uploaded file is a TXT file
-    elif uploaded_file.type == "text/plain":
-        # Read the TXT file content
-        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-        text = stringio.read()
-        st.text_area("Uploaded Text File", text, height=300)
+    if file_url:
+        # Show success message and the file URL
+        st.success(f"File uploaded successfully! You can access the file at: {file_url}")
 
-    else:
-        st.error("Unsupported file type")
-else:
-    st.info("Please upload a file to get started")
+        # Store the file URL in Streamlit session state to keep track of uploaded files
+        if "file_urls" not in st.session_state:
+            st.session_state.file_urls = []
+
+        # Add the newly uploaded file URL to the session state
+        st.session_state.file_urls.append(file_url)
+
+# Display all uploaded file URLs
+display_uploaded_files(st.session_state.get("file_urls", []))
