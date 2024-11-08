@@ -32,7 +32,7 @@ def display_uploaded_files(file_urls):
 st.title("File Upload with Django and Streamlit")
 
 # File uploader widget
-uploaded_file = st.file_uploader("Choose an audio file", type=["mp3", "wav", "flac", "ogg"])
+uploaded_file = st.file_uploader("Choose an audio file", type=["mp3", "wav", "flac", "ogg","pdf","jpg","pptx","jpeg","png"])
 
 if uploaded_file:
     # Call the API to upload the file
