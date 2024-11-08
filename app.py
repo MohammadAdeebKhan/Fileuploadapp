@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # The URL of the Django API for uploading files
-API_URL = "http://localhost:8000/api/save_docs/"  # Replace with your actual API endpoint
+API_URL = "https://expenseapp.creowiz.com/api/save_docs/"  # Replace with your actual API endpoint
 
 def upload_file_to_api(uploaded_file):
     """Send the uploaded file to the Django API and return the file URL."""
