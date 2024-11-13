@@ -11,25 +11,25 @@ from tinytag import TinyTag
 import streamlit as st
 from datetime import datetime
 import os
-from pydub import AudioSegment
-from mutagen.mp3 import MP3
-from mutagen.mp4 import MP4
-from mutagen.easyid3 import EasyID3
-import ffmpeg
-from pydub import AudioSegment
-import io
-from mutagen import File
-from moviepy.editor import AudioFileClip
-from mutagen.id3 import ID3
+# from pydub import AudioSegment
+# from mutagen.mp3 import MP3
+# from mutagen.mp4 import MP4
+# from mutagen.easyid3 import EasyID3
+# import ffmpeg
+# from pydub import AudioSegment
+# import io
+# # from mutagen import File
+# # from moviepy.editor import AudioFileClip
+# # from mutagen.id3 import ID3
 
-from django.core.files.storage import FileSystemStorage
-from pathlib import Path
-import audio_metadata
-from io import BytesIO
-from mutagen import File
-from mutagen.easyid3 import EasyID3
-from mp3_tagger import MP3File
-import music_tag
+# from django.core.files.storage import FileSystemStorage
+# from pathlib import Path
+# import audio_metadata
+# from io import BytesIO
+# from mutagen import File
+# from mutagen.easyid3 import EasyID3
+# from mp3_tagger import MP3File
+# import music_tag
 
 # def get_metadata(audio_file):
 
