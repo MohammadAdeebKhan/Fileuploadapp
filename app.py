@@ -17,7 +17,7 @@ from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
 import ffmpeg
 from pydub import AudioSegment
-import io`
+import io
 from mutagen import File
 from moviepy.editor import AudioFileClip
 from mutagen.id3 import ID3
