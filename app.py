@@ -11,142 +11,117 @@ from tinytag import TinyTag
 import streamlit as st
 from datetime import datetime
 import os
-# from pydub import AudioSegment
-# from mutagen.mp3 import MP3
-# from mutagen.mp4 import MP4
-# from mutagen.easyid3 import EasyID3
-# import ffmpeg
-# from pydub import AudioSegment
-# import io
-# # from mutagen import File
-# # from moviepy.editor import AudioFileClip
-# # from mutagen.id3 import ID3
+from pydub import AudioSegment
+from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
+from mutagen.easyid3 import EasyID3
+import ffmpeg
+from pydub import AudioSegment
+import io
+from mutagen import File
+from moviepy.editor import AudioFileClip
+from mutagen.id3 import ID3
 
-# from django.core.files.storage import FileSystemStorage
-# from pathlib import Path
-# import audio_metadata
-# from io import BytesIO
-# from mutagen import File
-# from mutagen.easyid3 import EasyID3
-# from mp3_tagger import MP3File
-# import music_tag
+from django.core.files.storage import FileSystemStorage
+from pathlib import Path
+import audio_metadata
+from io import BytesIO
+from mutagen import File
+from mutagen.easyid3 import EasyID3
+from mp3_tagger import MP3File
+import music_tag
+from pydub import AudioSegment
+import tempfile
+import torch
+from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
+import librosa
+import torchaudio
+from transformers import pipeline
+import torch
+from gradio_client import Client, file
+from transformers import pipeline, AutoModelForCausalLM, AutoModelForSpeechSeq2Seq, AutoProcessor
+import whisper
+import textwrap
+from langchain_groq import ChatGroq
+# from langchain.chains.combine_documents import create_stuff_documents_chain
+# from langchain.chains.llm import LLMChain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.output_parsers import StrOutputParser
+import time
+from chunks import Chunking
+import multiprocessing as mp
+from agent import TranscribeAgent
+from multiprocessing import Process, freeze_support
 
-# def get_metadata(audio_file):
 
-#     audio_bytes = BytesIO(audio_file.getvalue())
-#     tags = music_tag.load_file(audio_bytes)
-#     print(tags)
-
-def process_audio(audio_file):
-    try:
+def agent(audio_file):
         
-        # path = Path("tmp")
-        # path.mkdir(parents=False,exist_ok=True)
-        # fs = FileSystemStorage(location="tmp")
-        # file_name = fs.save(audio_file.name , audio_file)
-        # file_path = fs.url(file_name)
-
-        temp_file = f"file_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        full_transcription = ""
         
-        with open(temp_file, "wb") as f:
-            data = audio_file.getvalue()
-            if data:
-                #print(data)
-
-
-                f.write(data)
-            else:
-                print("No data to write to the file ")
-            timestamp = os.path.getctime(temp_file)
-            creation_date = datetime.fromtimestamp(timestamp)
-            print(f"This is creation date {creation_date}")
-        
-
-        # Load environment variables
         load_dotenv()
         API_KEY = os.getenv("SECRET_KEY")
+        # client = Groq(api_key = API_KEY)
+
+
+        
         
         if not API_KEY:
             st.error("API_KEY not found in environment variables")
             return None
+        
+    
 
-        # Initialize Groq client
-        client = Groq(api_key=API_KEY)
-
-        # Transcribe audio
-        with open(temp_file, "rb") as file:
-            audio_data = file.read()
-            transcription = client.audio.transcriptions.create(
-                file=(temp_file, audio_data),
-                #file = file , 
-                model="whisper-large-v3",
-                prompt="specify content and spelling and the sponsor name",
-                response_format="json",
-                language="en",
-                temperature=0.0
-            )
+        llm = ChatGroq(api_key=API_KEY , model="llama3-8b-8192")
 
         
+        agents = TranscribeAgent()
+        full_transcription ,temp_file = agents.process_audio(audio_file)
 
-        transcribe_text = transcription.text
         
-        # Get sponsor information using chat completion
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You have to find the sponsor name from the text just give the sponsor name no extra text from your side"
-                },
-                {
-                    "role": "user",
-                    "content": transcribe_text
-                }
-            ],
-            model="mixtral-8x7b-32768",
-            temperature=0.0
-        )
+        print(f"This is the full transcription {full_transcription}")
+        messages = [
+            SystemMessage(content="Give me the sponsor name from the given text please do analyze"),
+            HumanMessage(content=full_transcription)
+        ]
 
-        sponsor_name = chat_completion.choices[0].message.content
+        response = llm.invoke(messages)
+        sponsor_name = response.content
 
 
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You have to find the show name from the current text just give show name no extra text from your side"
-                },
-                {
-                    "role": "user",
-                    "content": transcribe_text
-                }
-            ],
-            model="mixtral-8x7b-32768",
-            temperature=0.0
-        )
 
-        show_name = chat_completion.choices[0].message.content
+        messages = [
+            SystemMessage(content="Give me the show name from the given text please do analyze"),
+            HumanMessage(content=full_transcription)
+        ]
 
+        response = llm.invoke(messages)
+        show_name = response.content
 
-        # Clean up temporary file
+        messages = [
+            SystemMessage(content=''' Give me the number of time the sponsor name is mentioned in the text following with sponsor 
+            word don't give text just give number of time it mentioned '''),
+            HumanMessage(content=full_transcription)
+        ]
+
+        response = llm.invoke(messages)
+        number_of_time = response.content
+
         os.remove(temp_file)
-
-        # Save to database
-        save_to_database(sponsor_name, show_name, transcribe_text)
-        
         return {
-            "transcription": transcribe_text,
-            "sponsor": sponsor_name,
-            "show_name": show_name
+            "transcription": full_transcription,
+            "sponsor_name": sponsor_name,
+            "show_name": show_name,
+            "number_of_time": number_of_time
         }
 
-    except Exception as e:
-        st.error(f"Error processing audio: {str(e)}")
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-        return None
+chunk = Chunking()
 
 
-def save_to_database(sponsor_name, show_name, transcribe_text):
+
+def save_to_database(sponsor_name, show_name, transcriptions):
     try:
         connection = pymysql.connect(
             host="localhost",
@@ -172,7 +147,7 @@ def save_to_database(sponsor_name, show_name, transcribe_text):
         VALUES (%s, %s, %s)
         """
         
-        cursor.execute(insert_query, (sponsor_name, show_name, transcribe_text))
+        cursor.execute(insert_query, (sponsor_name, show_name, transcriptions))
         connection.commit()
 
     except pymysql.Error as db_error:
@@ -207,9 +182,12 @@ def view_database():
             connection.close()
 
 def main():
+    
+
+    
     st.title("Audio Processing Application")
     
-    # Sidebar
+    
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Upload Audio", "View Records"])
 
@@ -223,22 +201,30 @@ def main():
             
             if st.button("Process Audio"):
                 with st.spinner("Processing audio..."):
-                    #get_metadata(uploaded_file)
-                    result = process_audio(uploaded_file)
+                    
+
+                    result = agent(uploaded_file)
+                    
+                    
                     
                 if result:
+                    save_to_database(result['sponsor_name'] , result["show_name"] , result['transcription'])
                     st.success("Audio processed successfully!")
                     
                     st.subheader("Transcription")
                     st.write(result["transcription"])
                     
                     st.subheader("Sponsor Information")
-                    st.write(result["sponsor"])
+                    st.write(result["sponsor_name"])
                     
                     st.subheader("Show Name")
                     st.write(result["show_name"])
 
-    else:  # View Records page
+                    st.subheader("number_of_time_sponsor_mentioned")
+                    st.write(result["number_of_time"])
+
+    else:  
+        
         st.header("Database Records")
         records = view_database()
         
@@ -255,7 +241,63 @@ def main():
         else:
             st.info("No records found in the database.")
 
+
 main()
+#if __name__ == '__main__':
+        #freeze_support()
+        #main()
 
 
+# import streamlit as st
+# import requests
 
+# # The URL of the Django API for uploading files
+# API_URL = "https://expenseapp.creowiz.com/api/save_docs/"  # Replace with your actual API endpoint
+
+# def upload_file_to_api(uploaded_file):
+#     """Send the uploaded file to the Django API and return the file URL."""
+#     # Prepare the file as a dictionary to send in a multipart/form-data POST request
+#     files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+
+#     # Send POST request to the Django API with the uploaded file
+#     response = requests.post(API_URL, files=files)
+
+#     if response.status_code == 201:
+#         # Successfully uploaded, return the file URL from the response
+#         return response.json().get("file", None)
+#     else:
+#         st.error(f"Failed to upload file. Error: {response.text}")
+#         return None
+
+# def display_uploaded_files(file_urls):
+#     """Display a list of uploaded file URLs in Streamlit."""
+#     if file_urls:
+#         st.write("### Uploaded Files:")
+#         for url in file_urls:
+#             st.markdown(f"[Click here to access the file]({url})")
+#     else:
+#         st.write("No files uploaded yet.")
+
+# # Streamlit app UI
+# st.title("File Upload with Django and Streamlit")
+
+# # File uploader widget
+# uploaded_file = st.file_uploader("Choose an audio file", type=["mp3", "wav", "flac", "ogg","pdf","jpg","pptx","jpeg","png"])
+
+# if uploaded_file:
+#     # Call the API to upload the file
+#     file_url = upload_file_to_api(uploaded_file)
+
+#     if file_url:
+#         # Show success message and the file URL
+#         st.success(f"File uploaded successfully! You can access the file at: {file_url}")
+
+#         # Store the file URL in Streamlit session state to keep track of uploaded files
+#         if "file_urls" not in st.session_state:
+#             st.session_state.file_urls = []
+
+#         # Add the newly uploaded file URL to the session state
+#         st.session_state.file_urls.append(file_url)
+
+# # Display all uploaded file URLs
+# display_uploaded_files(st.session_state.get("file_urls", []))
