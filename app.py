@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import os
 from chunks import Chunking
+from multiprocessing import freeze_support
 
 
 
