@@ -1,60 +1,13 @@
-import torch
-from  transformers import WhisperProcessor , WhisperForConditionalGeneration
-import librosa
-import numpy
-from groq import Groq
 from dotenv import load_dotenv
 import os
 import pymysql
-import json
-from tinytag import TinyTag
 import streamlit as st
-from datetime import datetime
 import os
-from pydub import AudioSegment
-from mutagen.mp3 import MP3
-from mutagen.mp4 import MP4
-from mutagen.easyid3 import EasyID3
-import ffmpeg
-from pydub import AudioSegment
-import io
-from mutagen import File
-from moviepy.editor import AudioFileClip
-from mutagen.id3 import ID3
-
-from django.core.files.storage import FileSystemStorage
-from pathlib import Path
-import audio_metadata
-from io import BytesIO
-from mutagen import File
-from mutagen.easyid3 import EasyID3
-from mp3_tagger import MP3File
-import music_tag
-from pydub import AudioSegment
-import tempfile
-import torch
-from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
-import librosa
-import torchaudio
-from transformers import pipeline
-import torch
-from gradio_client import Client, file
-from transformers import pipeline, AutoModelForCausalLM, AutoModelForSpeechSeq2Seq, AutoProcessor
-import whisper
-import textwrap
 from langchain_groq import ChatGroq
-# from langchain.chains.combine_documents import create_stuff_documents_chain
-# from langchain.chains.llm import LLMChain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.output_parsers import StrOutputParser
-import time
 from chunks import Chunking
-import multiprocessing as mp
 from agent import TranscribeAgent
-from multiprocessing import Process, freeze_support
+
 
 
 def agent(audio_file):
@@ -241,7 +194,63 @@ def main():
         else:
             st.info("No records found in the database.")
 
+
 main()
+#if __name__ == '__main__':
+        #freeze_support()
+        #main()
 
 
+# import streamlit as st
+# import requests
 
+# # The URL of the Django API for uploading files
+# API_URL = "https://expenseapp.creowiz.com/api/save_docs/"  # Replace with your actual API endpoint
+
+# def upload_file_to_api(uploaded_file):
+#     """Send the uploaded file to the Django API and return the file URL."""
+#     # Prepare the file as a dictionary to send in a multipart/form-data POST request
+#     files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+
+#     # Send POST request to the Django API with the uploaded file
+#     response = requests.post(API_URL, files=files)
+
+#     if response.status_code == 201:
+#         # Successfully uploaded, return the file URL from the response
+#         return response.json().get("file", None)
+#     else:
+#         st.error(f"Failed to upload file. Error: {response.text}")
+#         return None
+
+# def display_uploaded_files(file_urls):
+#     """Display a list of uploaded file URLs in Streamlit."""
+#     if file_urls:
+#         st.write("### Uploaded Files:")
+#         for url in file_urls:
+#             st.markdown(f"[Click here to access the file]({url})")
+#     else:
+#         st.write("No files uploaded yet.")
+
+# # Streamlit app UI
+# st.title("File Upload with Django and Streamlit")
+
+# # File uploader widget
+# uploaded_file = st.file_uploader("Choose an audio file", type=["mp3", "wav", "flac", "ogg","pdf","jpg","pptx","jpeg","png"])
+
+# if uploaded_file:
+#     # Call the API to upload the file
+#     file_url = upload_file_to_api(uploaded_file)
+
+#     if file_url:
+#         # Show success message and the file URL
+#         st.success(f"File uploaded successfully! You can access the file at: {file_url}")
+
+#         # Store the file URL in Streamlit session state to keep track of uploaded files
+#         if "file_urls" not in st.session_state:
+#             st.session_state.file_urls = []
+
+#         # Add the newly uploaded file URL to the session state
+#         st.session_state.file_urls.append(file_url)
+
+# # Display all uploaded file URLs
+# display_uploaded_files(st.session_state.get("file_urls", []))
