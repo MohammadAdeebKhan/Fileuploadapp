@@ -2,15 +2,12 @@ import pymysql
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
-from chunks import Chunking
-from agent import TranscribeAgent
 from pydub import AudioSegment
 from groq import Groq
 from dotenv import load_dotenv
 from datetime import datetime
 import os
-from chunks import Chunking
-from multiprocessing import freeze_support
+
 
 
 
@@ -119,7 +116,7 @@ def agent(audio_file):
         llm = ChatGroq(api_key=API_KEY , model="llama3-8b-8192")
 
         
-        agents = TranscribeAgent()
+        #agents = TranscribeAgent()
         full_transcription ,temp_file = process_audio(audio_file)
 
         
@@ -159,7 +156,7 @@ def agent(audio_file):
             "number_of_time": number_of_time
         }
 
-chunk = Chunking()
+#chunk = Chunking()
 
 
 
@@ -284,10 +281,10 @@ def main():
             st.info("No records found in the database.")
 
 
-#main()
-if __name__ == '__main__':
-        freeze_support()
-        main()
+main()
+#if __name__ == '__main__':
+        #freeze_support()
+        #main()
 
 
 # import streamlit as st
