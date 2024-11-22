@@ -1,14 +1,102 @@
-from dotenv import load_dotenv
-import os
 import pymysql
 import streamlit as st
-import os
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from chunks import Chunking
 from agent import TranscribeAgent
+from pydub import AudioSegment
+from groq import Groq
+from dotenv import load_dotenv
+from datetime import datetime
+import os
+from chunks import Chunking
 
 
+
+def process_audio(chunk):
+
+        transcriptions = []
+        
+
+        load_dotenv()
+        API_KEY = os.getenv("SECRET_KEY")
+        client = Groq(api_key = API_KEY)
+
+        temp_file = f"file_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        with open(temp_file, "wb") as f:
+            data = chunk.getvalue()
+            if data:
+                f.write(data)
+            else:
+                print("No data to write to the file")
+
+
+
+
+        
+
+
+        #chunk = Chunking()
+        chunks = chunk_audio(temp_file)
+        transcriptions = []
+        
+
+        for chunk in chunks:
+
+            with open(chunk , "rb") as f:
+                audio_data = f.read()
+                transcription = client.audio.transcriptions.create(
+                                file=(chunk, audio_data),
+                                model="whisper-large-v3",
+                                prompt="specify content and spelling and the sponsor name",
+                                response_format="json",
+                                language="en",
+                                temperature = 0.0
+                            )
+            
+                
+            transcribe_text = transcription.text 
+            #return transcribe_text 
+            transcriptions.append(transcribe_text)
+                
+            full_transcription = "\n".join(transcriptions)
+            print(full_transcription)
+            return full_transcription , temp_file
+
+def chunk_audio(file_path, chunk_length_ms=10000):
+        """Chunk an audio file into smaller parts based on chunk length."""
+
+        #length = chunk_length_ms
+        audio = AudioSegment.from_file(file_path)
+        full_chunk = len(audio)
+        chunks = []
+        chunk_size = full_chunk // 4
+        start_ms = 0
+
+        
+        while start_ms < full_chunk:
+            
+            #print(f'This is sart_ms {start_ms}')
+            end_ms = start_ms + chunk_size
+            
+            #print(f"this is {end_ms}")
+            chunk_audio = audio[start_ms:end_ms]
+            
+            
+            chunk_file_path = f"chunk{start_ms}.mp3"
+            
+            if len(chunk_audio) > 1:
+                chunk_audio.export(chunk_file_path, format="mp3")
+                chunks.append(chunk_file_path)
+            
+            
+            #chunks.append(chunk_file_path)
+
+            
+            start_ms += chunk_size
+            
+        
+        return chunks
 
 def agent(audio_file):
         
@@ -31,7 +119,7 @@ def agent(audio_file):
 
         
         agents = TranscribeAgent()
-        full_transcription ,temp_file = agents.process_audio(audio_file)
+        full_transcription ,temp_file = process_audio(audio_file)
 
         
         print(f"This is the full transcription {full_transcription}")
