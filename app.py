@@ -283,10 +283,10 @@ def main():
             st.info("No records found in the database.")
 
 
-main()
-#if __name__ == '__main__':
-        #freeze_support()
-        #main()
+#main()
+if __name__ == '__main__':
+        freeze_support()
+        main()
 
 
 # import streamlit as st
