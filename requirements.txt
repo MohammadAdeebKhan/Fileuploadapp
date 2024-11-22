@@ -3,8 +3,8 @@ altair==5.4.1
 annotated-types==0.7.0
 anyio==4.6.2.post1
 asgiref==3.8.1
-attrs==19.3.0
-audio-metadata==0.11.1
+#attrs==19.3.0
+#audio-metadata==0.11.1
 audioread==3.0.1
 bidict==0.23.1
 bitstruct==8.19.0
